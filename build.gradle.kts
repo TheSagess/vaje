@@ -45,10 +45,10 @@ loom {
         pack200Provider.set(dev.architectury.pack200.java.Pack200Adapter())
         // If you don't want mixins, remove this lines
         mixinConfig("mixins.$modid.json")
-	    if (transformerFile.exists()) {
-			println("Installing access transformer")
-		    accessTransformer(transformerFile)
-	    }
+        if (transformerFile.exists()) {
+            println("Installing access transformer")
+            accessTransformer(transformerFile)
+        }
     }
     // If you don't want mixins, remove these lines
     mixin {
@@ -65,9 +65,16 @@ sourceSets.main {
 repositories {
     mavenCentral()
     maven("https://repo.spongepowered.org/maven/")
-    // If you don't want to log in with your real minecraft account, remove this line
     maven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1")
+    maven(url = "https://repo.essential.gg/repository/maven-public")
+
+    // Additional repositories to resolve the missing dependencies
+    maven ( url = "https://maven.fabricmc.net" ) // Fabric's Maven repository
+    maven ( url = "https://jitpack.io/" ) // For Jitpack-based dependencies (e.g., from GitHub)
+    maven ( url = "https://oss.sonatype.org/content/repositories/snapshots/" ) // For snapshots and other dependencies
+    maven ( url = "https://github.com/KevinPriv/MojangAPI" ) // Custom GitHub repository for KevinPriv libraries, if applicable
 }
+
 
 val shadowImpl: Configuration by configurations.creating {
     configurations.implementation.get().extendsFrom(this)
@@ -78,6 +85,14 @@ dependencies {
     mappings("de.oceanlabs.mcp:mcp_stable:22-1.8.9")
     forge("net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9")
 
+    implementation("gg.essential:vigilance:306")
+    modImplementation("gg.essential:universalcraft-1.8.9-forge:369")
+
+    // Direct usage of implementation without embed
+    implementation("gg.essential:loader-launchwrapper:1.1.3")
+    implementation("gg.essential:vigilance-1.8.9-forge:195")
+    implementation("gg.essential:Essential:1193-10809-SNAPSHOT")
+
     // If you don't want mixins, remove these lines
     shadowImpl("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
@@ -86,8 +101,8 @@ dependencies {
 
     // If you don't want to log in with your real minecraft account, remove this line
     runtimeOnly("me.djtheredstoner:DevAuth-forge-legacy:1.2.1")
-
 }
+
 
 // Tasks:
 
@@ -104,8 +119,8 @@ tasks.withType(org.gradle.jvm.tasks.Jar::class) {
         // If you don't want mixins, remove these lines
         this["TweakClass"] = "org.spongepowered.asm.launch.MixinTweaker"
         this["MixinConfigs"] = "mixins.$modid.json"
-	    if (transformerFile.exists())
-			this["FMLAT"] = "${modid}_at.cfg"
+        if (transformerFile.exists())
+            this["FMLAT"] = "${modid}_at.cfg"
     }
 }
 
@@ -136,17 +151,17 @@ tasks.jar {
 
 tasks.shadowJar {
     destinationDirectory.set(layout.buildDirectory.dir("intermediates"))
-    archiveClassifier.set("non-obfuscated-with-deps")
+    archiveClassifier.set("") // Use an empty string instead of null to avoid ambiguity
     configurations = listOf(shadowImpl)
+    relocate("gg.essential.vigilance", "com.github.thesagess.vaje.vigilance")
+    relocate("gg.essential.elementa", "com.github.thesagess.vaje.elementa")
+    relocate("gg.essential.universalcraft", "com.github.thesagess.vaje.universalcraft")
     doLast {
         configurations.forEach {
             println("Copying dependencies into mod: ${it.files}")
         }
     }
 
-    // If you want to include other dependencies and shadow them, you can relocate them in here
     fun relocate(name: String) = relocate(name, "$baseGroup.deps.$name")
 }
-
 tasks.assemble.get().dependsOn(tasks.remapJar)
-

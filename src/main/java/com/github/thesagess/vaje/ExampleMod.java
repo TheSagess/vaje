@@ -23,8 +23,8 @@ public class ExampleMod {
         config.preload();
 
         // Registered new ExampleCommand that is activated using /example or /ex
-        new configcommand("example").register();
-        new configcommand("ex").register();
+        new configcommand("vaje").register();
+        new configcommand("vj").register();
 
         MinecraftForge.EVENT_BUS.register(this);
 
